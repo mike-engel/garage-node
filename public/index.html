@@ -1,54 +1,76 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Nycum's Garage</title>
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimal-ui">
-	<link rel="apple-touch-icon" sizes="120x120" href="touch-icon-iphone-retina.png">
-	<style>
-	html, body, div, button {
-		margin: 0;
-		padding: 0;
-		font-family: "Helvetica Neue";
-	}
+  <meta charset="UTF-8">
+  <title>The Garage</title>
+  <meta name="viewport" content="initial-scale=1, width=device-width, minimal-ui">
+  <link rel="apple-touch-icon" href="touch-icon-iphone-retina.png">
+  <style>
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font: normal normal 36px/1.4 "Helvetica Neue", Helvetica, Arial, Sans-serif;
+  }
 
-	body {
-		background-color: #EAEAEA;
-	}
+  body {
+    background-color: #ECF0F1;
+  }
 
-	button {
-		background-color: #FFFFFF;
-		border: 1px solid #C9C9C9;
-		border-right: 0px solid #000;
-		border-left: 0px solid #000;
-		font-size: 1.5em;
-		margin-top: 20px;
-		width: 100%;
-		height: 44px;
-	}
-	</style>
+  section {
+    padding: 10vh 10vw;
+  }
+
+  button {
+    display: block;
+    width: 100%;
+    height: calc(50vh - 15vh);
+    margin: 0 auto;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    border: none;
+    background-color: #2ECC71;
+  }
+
+  button + button {
+    margin-top: 10vh;
+    background-color: #3498DB;
+  }
+
+  button:active {
+    background-color: #27AE60
+  }
+
+  button + button:active {
+    background-color: #2980B9
+  }
+  </style>
 </head>
 <body>
-	<button onclick="openLeft()">Left Garage</button>
-	<button onclick="openRight()">Right Garage</button>
-	<button onclick="openBoth()">Both Garages</button>
+  <section>
+    <button onclick="openLeft()">Left Garage</button>
+    <button onclick="openRight()">Right Garage</button>
+  </section>
+  <script>
+  function post (url) {
+    var request = new XMLHttpRequest()
 
-	<script>
+    request.open('POST', url, true)
+    request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8')
+    request.send({})
+  }
 
-	function post(url) {
-		var request = new XMLHttpRequest();
-		request.open('POST', url, true);
-		request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-		request.send({});
-	}
+  function openLeft () {
+    post("/api/garage/left")
+  }
 
-	function openLeft() { post("/api/garage/left"); }
-
-	function openRight() { post("/api/garage/right"); }
-
-	function openBoth() { post("/api/garage/both"); }
-
-	</script>
-
+  function openRight () {
+    post("/api/garage/right")
+  }
+  </script>
 </body>
 </html>

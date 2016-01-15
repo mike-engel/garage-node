@@ -1,110 +1,90 @@
-var express = require('express'),
-	path = require('path'),
-	config = require('./config'),
-	async = require('async'),
-	gpio = require('pi-gpio'),
-	app = express();
+var express = require('express')
+var config = require('./config')
+var async = require('async')
+var gpio = require('rpi-gpio')
+var app = express()
 
-app.set('port', process.env.PORT || 3000);
-
-app.use('/', express.static(__dirname + '/public'));
-
-function delayPinWrite(pin, value, callback) {
-	setTimeout(function() {
-		gpio.write(pin, value, callback);
-	}, config.RELAY_TIMEOUT);
+function delayPinWrite (pin, value, callback) {
+  setTimeout(function () {
+    if (value === config.RELAY_ON) {
+      turnOnPin(pin, callback)
+    } else {
+      turnOffPin(pin, callback)
+    }
+  }, config.RELAY_TIMEOUT)
 }
 
-app.get("/api/ping", function(req, res) {
-	res.json("pong");
-});
+function turnOnPin (pin, callback) {
+  gpio.write(pin, config.RELAY_ON, callback)
+}
 
-app.post("/api/garage/left", function(req, res) {
-	async.series([
-		function(callback) {
-			// Open pin for output
-			gpio.open(config.LEFT_GARAGE_PIN, "output", callback);
-		},
-		function(callback) {
-			// Turn the relay on
-			gpio.write(config.LEFT_GARAGE_PIN, config.RELAY_ON, callback);
-		},
-		function(callback) {
-			// Turn the relay off after delay to simulate button press
-			delayPinWrite(config.LEFT_GARAGE_PIN, config.RELAY_OFF, callback);
-		},
-		function(err, results) {
-			setTimeout(function() {
-				// Close pin from further writing
-				gpio.close(config.LEFT_GARAGE_PIN);
-				// Return json
-				res.json("ok");
-			}, config.RELAY_TIMEOUT);
-		}
-	]);
-});
+function turnOffPin (pin, callback) {
+  gpio.write(pin, config.RELAY_OFF, callback)
+}
 
-app.post("/api/garage/right", function(req, res) {
-	async.series([
-		function(callback) {
-			// Open pin for output
-			gpio.open(config.RIGHT_GARAGE_PIN, "output", callback);
-		},
-		function(callback) {
-			// Turn the relay on
-			gpio.write(config.RIGHT_GARAGE_PIN, config.RELAY_ON, callback);
-		},
-		function(callback) {
-			// Turn the relay off after delay to simulate button press
-			delayPinWrite(config.RIGHT_GARAGE_PIN, config.RELAY_OFF, callback);
-		},
-		function(err, results) {
-			setTimeout(function() {
-				// Close pin from further writing
-				gpio.close(config.RIGHT_GARAGE_PIN);
-				// Return json
-				res.json("ok");
-			}, config.RELAY_TIMEOUT);
-		}
-	]);
-});
+async.parallel([
+  function (callback) {
+    gpio.setup(config.LEFT_GARAGE_PIN, gpio.DIR_OUT, callback)
+  },
+  function (callback) {
+    gpio.setup(config.RIGHT_GARAGE_PIN, gpio.DIR_OUT, callback)
+  }
+], function (err) {
+  if (err) {
+    console.error(err)
 
-app.post("/api/garage/both", function(req, res) {
-	async.series([
-		function(callback) {
-			// Open pin for output
-			gpio.open(config.LEFT_GARAGE_PIN, "output", callback);
-		},
-		function(callback) {
-			// Open pin for output
-			gpio.open(config.RIGHT_GARAGE_PIN, "output", callback);
-		},
-		function(callback) {
-			// Turn the relay on
-			gpio.write(config.LEFT_GARAGE_PIN, config.RELAY_ON, callback);
-		},
-		function(callback) {
-			// Turn the relay on
-			gpio.write(config.RIGHT_GARAGE_PIN, config.RELAY_ON, callback);
-		},
-		function(callback) {
-			// Turn the relay off after delay to simulate button press
-			delayPinWrite(config.LEFT_GARAGE_PIN, config.RELAY_OFF, callback);
-		},
-		function(callback) {
-			// Turn the relay off after delay to simulate button press
-			delayPinWrite(config.RIGHT_GARAGE_PIN, config.RELAY_OFF, callback);
-		},
-		function(err, results) {
-			setTimeout(function() {
-				// Close pin from further writing
-				gpio.close(config.LEFT_GARAGE_PIN);
-				gpio.close(config.RIGHT_GARAGE_PIN);
-				// Return json
-				res.json("ok");
-			}, config.RELAY_TIMEOUT);
-		}
-	]);
-});
+    process.exit(2)
+  }
 
-app.listen(app.get('port'));
+  console.log('Pins setup. Ready to roll.')
+})
+
+app.set('port', process.env.PORT || 3000)
+
+app.use('/', express.static(__dirname + '/public'))
+
+app.get('/api/ping', function (req, res) {
+  res.json('pong')
+})
+
+app.post('/api/garage/left', function (req, res) {
+  async.series([
+    function (callback) {
+      // Turn the relay on
+      turnOnPin(config.LEFT_GARAGE_PIN, callback)
+    },
+    function (callback) {
+      // Turn the relay off after delay to simulate button press
+      delayPinWrite(config.LEFT_GARAGE_PIN, config.RELAY_OFF, callback)
+    },
+    function (err, results) {
+      if (err) {
+        console.error(err)
+      }
+    }
+  ])
+})
+
+app.post('/api/garage/right', function (req, res) {
+  async.series([
+    function (callback) {
+      // Turn the relay on
+      turnOnPin(config.RIGHT_GARAGE_PIN, callback)
+    },
+    function (callback) {
+      // Turn the relay off after delay to simulate button press
+      delayPinWrite(config.RIGHT_GARAGE_PIN, config.RELAY_OFF, callback)
+    },
+    function (err, results) {
+      if (err) {
+        console.error(err)
+      }
+    }
+  ])
+})
+
+app.listen(app.get('port'))
+
+process.on('exit', () => {
+  gpio.destroy()
+})
