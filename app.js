@@ -36,24 +36,22 @@ async.parallel([
     process.exit(2)
   }
 
-  console.log('Pins setup.')
-})
+  async.parallel([
+    function (callback) {
+      turnOffPin(config.LEFT_GARAGE_PIN, callback)
+    },
+    function (callback) {
+      turnOffPin(config.RIGHT_GARAGE_PIN, callback)
+    }
+  ], function (err) {
+    if (err) {
+      console.error(err)
 
-async.parallel([
-  function (callback) {
-    turnOffPin(config.LEFT_GARAGE_PIN, callback)
-  },
-  function (callback) {
-    turnOffPin(config.RIGHT_GARAGE_PIN, callback)
-  }
-], function (err) {
-  if (err) {
-    console.error(err)
+      process.exit(2)
+    }
 
-    process.exit(2)
-  }
-
-  console.log('Pins set to off. Ready to roll.')
+    console.log('Pins setup. Ready to roll.')
+  })
 })
 
 app.set('port', process.env.PORT || 3000)
