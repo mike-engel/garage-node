@@ -36,7 +36,24 @@ async.parallel([
     process.exit(2)
   }
 
-  console.log('Pins setup. Ready to roll.')
+  console.log('Pins setup.')
+})
+
+async.parallel([
+  function (callback) {
+    turnOffPin(config.LEFT_GARAGE_PIN, callback)
+  },
+  function (callback) {
+    turnOffPin(config.RIGHT_GARAGE_PIN, callback)
+  }
+], function (err) {
+  if (err) {
+    console.error(err)
+
+    process.exit(2)
+  }
+
+  console.log('Pins set to off. Ready to roll.')
 })
 
 app.set('port', process.env.PORT || 3000)
@@ -56,13 +73,15 @@ app.post('/api/garage/left', function (req, res) {
     function (callback) {
       // Turn the relay off after delay to simulate button press
       delayPinWrite(config.LEFT_GARAGE_PIN, config.RELAY_OFF, callback)
-    },
-    function (err, results) {
-      if (err) {
-        console.error(err)
-      }
     }
-  ])
+  ],
+  function (err, results) {
+    if (err) {
+      console.error('error: ', err)
+
+      turnOffPin(config.LEFT_GARAGE_PIN, function () {})
+    }
+  })
 })
 
 app.post('/api/garage/right', function (req, res) {
@@ -74,13 +93,15 @@ app.post('/api/garage/right', function (req, res) {
     function (callback) {
       // Turn the relay off after delay to simulate button press
       delayPinWrite(config.RIGHT_GARAGE_PIN, config.RELAY_OFF, callback)
-    },
-    function (err, results) {
-      if (err) {
-        console.error(err)
-      }
     }
-  ])
+  ],
+  function (err, results) {
+    if (err) {
+      console.error('error: ', err)
+
+      turnOffPin(config.RIGHT_GARAGE_PIN, function () {})
+    }
+  })
 })
 
 app.listen(app.get('port'))
